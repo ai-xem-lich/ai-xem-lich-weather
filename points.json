@@ -440,8 +440,8 @@
     {
      "id": "ba-ria-vung-tau",
      "name": "Bà Rịa – Vũng Tàu",
-     "lat": 10.4963,
-     "lon": 107.1684
+     "lat": 10.345,
+     "lon": 107.076
     }
    ]
   },
@@ -582,6 +582,236 @@
      "lon": 105.0809
     }
    ]
+  }
+ ],
+ "dests": [
+  {
+   "id": "tp-ho-chi-minh",
+   "name": "TP. Hồ Chí Minh",
+   "prov": "tp-ho-chi-minh",
+   "point": "tp-ho-chi-minh"
+  },
+  {
+   "id": "ha-noi",
+   "name": "Hà Nội",
+   "prov": "ha-noi",
+   "point": "ha-noi"
+  },
+  {
+   "id": "da-nang",
+   "name": "Đà Nẵng",
+   "prov": "da-nang",
+   "point": "da-nang"
+  },
+  {
+   "id": "phu-quoc",
+   "name": "Phú Quốc",
+   "prov": "an-giang",
+   "point": "phu-quoc",
+   "lat": 10.218,
+   "lon": 103.9595
+  },
+  {
+   "id": "ha-long",
+   "name": "Hạ Long",
+   "prov": "quang-ninh",
+   "point": "quang-ninh"
+  },
+  {
+   "id": "da-lat",
+   "name": "Đà Lạt",
+   "prov": "lam-dong",
+   "point": "lam-dong"
+  },
+  {
+   "id": "nha-trang",
+   "name": "Nha Trang",
+   "prov": "khanh-hoa",
+   "point": "khanh-hoa"
+  },
+  {
+   "id": "hoi-an",
+   "name": "Hội An",
+   "prov": "da-nang",
+   "point": "hoi-an",
+   "lat": 15.8775,
+   "lon": 108.328
+  },
+  {
+   "id": "sa-pa",
+   "name": "Sa Pa",
+   "prov": "lao-cai",
+   "point": "sa-pa",
+   "lat": 22.336,
+   "lon": 103.843
+  },
+  {
+   "id": "ninh-binh-trang-an",
+   "name": "Ninh Bình – Tràng An",
+   "prov": "ninh-binh",
+   "point": "ninh-binh"
+  },
+  {
+   "id": "hue",
+   "name": "Huế",
+   "prov": "hue",
+   "point": "hue"
+  },
+  {
+   "id": "mui-ne",
+   "name": "Mũi Né",
+   "prov": "lam-dong",
+   "point": "mui-ne",
+   "lat": 10.948,
+   "lon": 108.23
+  },
+  {
+   "id": "vung-tau",
+   "name": "Vũng Tàu",
+   "prov": "tp-ho-chi-minh",
+   "point": "ba-ria-vung-tau"
+  },
+  {
+   "id": "ba-na",
+   "name": "Bà Nà",
+   "prov": "da-nang",
+   "point": "ba-na",
+   "lat": 15.9959,
+   "lon": 107.9891
+  },
+  {
+   "id": "quy-nhon",
+   "name": "Quy Nhơn",
+   "prov": "gia-lai",
+   "point": "binh-dinh"
+  },
+  {
+   "id": "con-dao",
+   "name": "Côn Đảo",
+   "prov": "tp-ho-chi-minh",
+   "point": "con-dao",
+   "lat": 8.685,
+   "lon": 106.608
+  },
+  {
+   "id": "tam-dao",
+   "name": "Tam Đảo",
+   "prov": "phu-tho",
+   "point": "tam-dao",
+   "lat": 21.456,
+   "lon": 105.6445
+  },
+  {
+   "id": "moc-chau",
+   "name": "Mộc Châu",
+   "prov": "son-la",
+   "point": "moc-chau",
+   "lat": 20.8486,
+   "lon": 104.642
+  },
+  {
+   "id": "dong-van-ha-giang",
+   "name": "Đồng Văn – Hà Giang",
+   "prov": "tuyen-quang",
+   "point": "dong-van-ha-giang",
+   "lat": 23.2797,
+   "lon": 105.3608
+  },
+  {
+   "id": "cat-ba",
+   "name": "Cát Bà",
+   "prov": "hai-phong",
+   "point": "cat-ba",
+   "lat": 20.724,
+   "lon": 107.052
+  },
+  {
+   "id": "phong-nha",
+   "name": "Phong Nha",
+   "prov": "quang-tri",
+   "point": "phong-nha",
+   "lat": 17.61,
+   "lon": 106.307
+  },
+  {
+   "id": "mang-den",
+   "name": "Măng Đen",
+   "prov": "quang-ngai",
+   "point": "mang-den",
+   "lat": 14.603,
+   "lon": 108.289
+  },
+  {
+   "id": "sam-son",
+   "name": "Sầm Sơn",
+   "prov": "thanh-hoa",
+   "point": "sam-son",
+   "lat": 19.742,
+   "lon": 105.905
+  },
+  {
+   "id": "chau-doc-nui-sam",
+   "name": "Châu Đốc – Núi Sam",
+   "prov": "an-giang",
+   "point": "chau-doc-nui-sam",
+   "lat": 10.6821,
+   "lon": 105.0802
+  },
+  {
+   "id": "mau-son",
+   "name": "Mẫu Sơn",
+   "prov": "lang-son",
+   "point": "mau-son",
+   "lat": 21.8495,
+   "lon": 106.9175
+  },
+  {
+   "id": "bach-ma",
+   "name": "Bạch Mã",
+   "prov": "hue",
+   "point": "bach-ma",
+   "lat": 16.195,
+   "lon": 107.855
+  },
+  {
+   "id": "bao-loc",
+   "name": "Bảo Lộc",
+   "prov": "lam-dong",
+   "point": "bao-loc",
+   "lat": 11.548,
+   "lon": 107.8077
+  },
+  {
+   "id": "mu-cang-chai",
+   "name": "Mù Cang Chải",
+   "prov": "lao-cai",
+   "point": "mu-cang-chai",
+   "lat": 21.8516,
+   "lon": 104.0896
+  },
+  {
+   "id": "pu-luong",
+   "name": "Pù Luông",
+   "prov": "thanh-hoa",
+   "point": "pu-luong",
+   "lat": 20.4451,
+   "lon": 105.1525
+  },
+  {
+   "id": "ly-son",
+   "name": "Lý Sơn",
+   "prov": "quang-ngai",
+   "point": "ly-son",
+   "lat": 15.3809,
+   "lon": 109.1175
+  },
+  {
+   "id": "co-to",
+   "name": "Cô Tô",
+   "prov": "quang-ninh",
+   "point": "co-to",
+   "lat": 20.9703,
+   "lon": 107.7638
   }
  ]
 }

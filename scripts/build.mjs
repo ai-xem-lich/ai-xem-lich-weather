@@ -98,7 +98,9 @@ function prevDays(id) {
 const now = Date.now(), today = vnDate(now);
 const areas = {}, stat = { 200: 0, 304: 0, err: 0 };
 const t0 = Date.now();
-for (const p of points.provinces) for (const a of p.areas) {
+// 63 khu vực + điểm du lịch có toạ độ riêng (points.json dests[].lat) — cùng 1 vòng, cùng khoá trong areas
+const targets = [...points.provinces.flatMap(p => p.areas), ...(points.dests || []).filter(d => d.lat != null)];
+for (const a of targets) {
     const old = prevDays(a.id);
     let days, ok = prev?.areas?.[a.id]?.t;
     try {
@@ -137,7 +139,7 @@ for (const p of points.provinces) for (const a of p.areas) {
     await sleep(GAP_MS);
 }
 
-const total = points.provinces.reduce((n, p) => n + p.areas.length, 0);
+const total = targets.length;
 if (stat.err > total / 2) { console.error(`Lỗi ${stat.err}/${total} khu vực — giữ nguyên dữ liệu cũ`); process.exit(1); }
 fs.mkdirSync(OUT, { recursive: true });
 const vn = { v: 1, src: SRC, generated: new Date(now).toISOString(), areas };
