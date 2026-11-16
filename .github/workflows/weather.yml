@@ -3,6 +3,7 @@ name: weather
 on:
   schedule:
     - cron: '17 * * * *'   # mỗi giờ, phút lẻ (giờ chẵn GitHub hay trễ/bỏ lượt)
+    - cron: '47 */3 * * *' # dự phòng mỗi 3 giờ (GitHub có thể bỏ lượt hằng giờ; trùng nội dung thì MET trả 304, gần như không tốn)
     - cron: '41 3 1 * *'   # giữ sống: ngày 1 hằng tháng
   workflow_dispatch:
 
