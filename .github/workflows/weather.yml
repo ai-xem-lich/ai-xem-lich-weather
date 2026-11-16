@@ -1,0 +1,65 @@
+name: weather
+
+on:
+  schedule:
+    - cron: '17 * * * *'   # mỗi giờ, phút lẻ (giờ chẵn GitHub hay trễ/bỏ lượt)
+    - cron: '41 3 1 * *'   # giữ sống: ngày 1 hằng tháng
+  workflow_dispatch:
+
+permissions:
+  contents: write   # đẩy nhánh data (jsDelivr đọc từ đây)
+  pages: write
+  id-token: write
+  actions: write    # giữ sống: bật lại chính workflow này
+
+concurrency:
+  group: weather
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event.schedule != '41 3 1 * *'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Lấy dữ liệu lượt trước (nhánh data)
+        run: |
+          mkdir -p out
+          if git fetch --depth=1 origin data; then git archive FETCH_HEAD | tar -x -C out; fi
+
+      - name: Gọi MET Norway, gộp theo ngày
+        run: node scripts/build.mjs out
+
+      - name: Đẩy nhánh data (1 commit, ghi đè — repo không phình)
+        working-directory: out
+        run: |
+          git init -q -b data
+          git add -A
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit -q -m "data $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+      - uses: actions/deploy-pages@v4
+
+      - name: Làm mới jsDelivr (nguồn dự phòng)
+        continue-on-error: true
+        run: curl -fsS "https://purge.jsdelivr.net/gh/${{ github.repository }}@data/vn.json" | head -c 300
+
+  keepalive:
+    # GitHub tắt cron của repo công khai sau 60 ngày không hoạt động → hằng tháng tự bật lại
+    if: github.event.schedule == '41 3 1 * *'
+    runs-on: ubuntu-latest
+    steps:
+      - run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/weather.yml/enable"
+        env:
+          GH_TOKEN: ${{ github.token }}
