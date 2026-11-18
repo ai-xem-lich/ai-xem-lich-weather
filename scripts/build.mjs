@@ -65,8 +65,17 @@ function pickKind(codes, mm) {
     // bằng nhau → nghiêng về nhiều mây hơn
     return ['cloud', 'pcloud', 'fair', 'clear', 'fog'].reduce((a, k) => (n[k] > n[a] ? k : a), 'cloud');
 }
-const kindOf = sym => pickKind([sym], 0) === 'cloud' && /rain/.test(sym) ? (base(sym).includes('showers') ? 'shower' : 'rain') : pickKind([sym], /heavy/.test(sym) ? 10 : /light/.test(sym) ? 1 : 5);
+// 1 mã symbol_code (1 giờ / mốc "hiện tại") → loại hình: đọc thẳng từ mã (nhẹ / to theo tiền tố light / heavy), không qua lượng mưa
+function kindOf(sym) {
+    const c = base(sym);
+    if (/snow|sleet/.test(c)) return 'snow';
+    if (c.includes('thunder')) return c.includes('showers') ? 'tshower' : 'train';
+    if (c.includes('rain')) return (c.startsWith('light') ? 'l' : c.startsWith('heavy') ? 'h' : '') + (c.includes('showers') ? 'shower' : 'rain');
+    return { clearsky: 'clear', fair: 'fair', partlycloudy: 'pcloud', fog: 'fog' }[c] || 'cloud';
+}
 const kmh = ms => Math.round(ms * 3.6);
+// thứ tự mã loại hình trong bảng theo giờ (app weather.js giữ CÙNG thứ tự)
+const KIND_ORDER = ['clear', 'fair', 'pcloud', 'cloud', 'fog', 'lshower', 'shower', 'hshower', 'lrain', 'rain', 'hrain', 'tshower', 'train', 'snow'];
 
 // 1 bản tin MET (complete) → { days: { 'YYYY-MM-DD': [icon, min, max, mm, kind, ẩm %, gió km/h, hướng °, cảm giác °C, UV, giờ phủ] }, now }
 function daily(json) {
@@ -107,7 +116,17 @@ function daily(json) {
     const x0 = json.properties.timeseries[0], I0 = x0.data.instant.details, s0 = (x0.data.next_1_hours || x0.data.next_6_hours || {}).summary;
     const now = { t: x0.time, temp: Math.round(I0.air_temperature), feel: I0.apparent_air_temperature == null ? null : Math.round(I0.apparent_air_temperature),
         hum: Math.round(I0.relative_humidity), wind: kmh(I0.wind_speed || 0), dir: Math.round(I0.wind_from_direction || 0), kind: s0 ? kindOf(s0.symbol_code) : null };
-    return { days: out, now };
+    // bảng 24 GIỜ TỚI (user 2026-11-18, phương án B): app tự lấy đúng giờ hiện tại + dải theo giờ trong popup.
+    // h = { t: giờ đầu (ISO), T: nhiệt độ, F: cảm giác, K: loại hình (chỉ số KIND_ORDER, +20 = ban đêm), P: mưa mm/giờ }
+    const H = json.properties.timeseries.filter(x => x.data.next_1_hours).slice(0, 24);
+    const hourly = H.length ? {
+        t: H[0].time,
+        T: H.map(x => Math.round(x.data.instant.details.air_temperature)),
+        F: H.map(x => Math.round(x.data.instant.details.apparent_air_temperature ?? x.data.instant.details.air_temperature)),
+        K: H.map(x => { const c = x.data.next_1_hours.summary.symbol_code; return KIND_ORDER.indexOf(kindOf(c)) + (/_night$/.test(c) ? 20 : 0); }),
+        P: H.map(x => round1(x.data.next_1_hours.details.precipitation_amount || 0))
+    } : null;
+    return { days: out, now, hourly };
 }
 
 async function fetchArea(a) {
@@ -138,7 +157,7 @@ const t0 = Date.now();
 const targets = [...points.provinces.flatMap(p => p.areas), ...(points.dests || []).filter(d => d.lat != null)];
 for (const a of targets) {
     const old = prevDays(a.id);
-    let days, ok = prev?.areas?.[a.id]?.t, nowBlk = prev?.areas?.[a.id]?.n || null;
+    let days, ok = prev?.areas?.[a.id]?.t, nowBlk = prev?.areas?.[a.id]?.n || null, hrBlk = prev?.areas?.[a.id]?.h || null;
     try {
         const r = await fetchArea(a);
         stat[r.status]++;
@@ -146,6 +165,7 @@ for (const a of targets) {
         else {
             ok = new Date(now).toISOString();
             nowBlk = r.now;
+            hrBlk = r.hourly;
             days = {};
             for (const [k, v] of Object.entries(r.days)) {
                 // ngày đã đi qua (dù ngày cuối chưa đủ 18 giờ dữ liệu) → bỏ ngày cuối thiếu
@@ -174,7 +194,7 @@ for (const a of targets) {
             if (!days[k]) break;
             d.push(days[k]);
         }
-        areas[a.id] = { t: ok, s: keys[0], d, ...(nowBlk ? { n: nowBlk } : {}) };
+        areas[a.id] = { t: ok, s: keys[0], d, ...(nowBlk ? { n: nowBlk } : {}), ...(hrBlk ? { h: hrBlk } : {}) };
     }
     await sleep(GAP_MS);
 }
