@@ -42,15 +42,45 @@ function pickIcon(codes, mm) {
     return ['cloud', 'pcloud', 'sun', 'fog'].reduce((a, b) => (n[b] > n[a] ? b : a), 'cloud');
 }
 
-// 1 bản tin MET (complete) → { 'YYYY-MM-DD': [icon, min, max, mm, giờ phủ] }
+// Loại hình CHI TIẾT (14 loại, user 2026-11-18: như thẻ thời tiết Google) — symbol_code MET → mã app:
+// clear fair pcloud cloud fog · lshower shower hshower (mưa rào nhẹ / rào / rào to) · lrain rain hrain · tshower train (kèm giông) · snow
+const base = c => c.replace(/_(day|night|polartwilight)$/, '');
+function pickKind(codes, mm) {
+    const c = codes.map(base);
+    if (c.some(x => /snow|sleet/.test(x))) return 'snow';
+    const thunder = c.filter(x => x.includes('thunder'));
+    const wet = c.filter(x => /rain/.test(x));
+    const showers = wet.filter(x => x.includes('showers')).length * 2 >= wet.length;
+    if (thunder.length) return thunder.filter(x => x.includes('showers')).length * 2 >= thunder.length ? 'tshower' : 'train';
+    // mưa ≥ 1 mm mà ban ngày không có mã mưa (mưa rơi ban đêm) → vẫn là mưa, mặc định mưa rào (khớp icon pickIcon)
+    if (mm >= 1) {
+        const lvl = mm >= 10 ? 'h' : mm >= 5 ? '' : 'l';
+        return lvl + (showers ? 'shower' : 'rain');
+    }
+    const n = { clear: 0, fair: 0, pcloud: 0, cloud: 0, fog: 0 };
+    for (const x of c) {
+        if (x === 'clearsky') n.clear++; else if (x === 'fair') n.fair++; else if (x === 'partlycloudy') n.pcloud++;
+        else if (x === 'fog') n.fog++; else n.cloud++;
+    }
+    // bằng nhau → nghiêng về nhiều mây hơn
+    return ['cloud', 'pcloud', 'fair', 'clear', 'fog'].reduce((a, k) => (n[k] > n[a] ? k : a), 'cloud');
+}
+const kindOf = sym => pickKind([sym], 0) === 'cloud' && /rain/.test(sym) ? (base(sym).includes('showers') ? 'shower' : 'rain') : pickKind([sym], /heavy/.test(sym) ? 10 : /light/.test(sym) ? 1 : 5);
+const kmh = ms => Math.round(ms * 3.6);
+
+// 1 bản tin MET (complete) → { days: { 'YYYY-MM-DD': [icon, min, max, mm, kind, ẩm %, gió km/h, hướng °, cảm giác °C, UV, giờ phủ] }, now }
 function daily(json) {
     const days = {};
     let last1h = -Infinity;
     for (const x of json.properties.timeseries) {
-        const t = Date.parse(x.time), k = vnDate(t), h = vnHour(t);
-        const d = days[k] ||= { mn: Infinity, mx: -Infinity, mm: 0, hours: 0, codes: [] };
-        const T = x.data.instant.details.air_temperature;
+        const t = Date.parse(x.time), k = vnDate(t), h = vnHour(t), I = x.data.instant.details;
+        const d = days[k] ||= { mn: Infinity, mx: -Infinity, mm: 0, hours: 0, codes: [], hum: [], wind: -1, dir: 0, feel: -Infinity, uv: 0 };
+        const T = I.air_temperature;
         d.mn = Math.min(d.mn, T); d.mx = Math.max(d.mx, T);
+        if (h >= 6 && h <= 18 && I.relative_humidity != null) d.hum.push(I.relative_humidity);
+        if (I.wind_speed != null && I.wind_speed > d.wind) { d.wind = I.wind_speed; d.dir = I.wind_from_direction || 0; }
+        if (I.apparent_air_temperature != null) d.feel = Math.max(d.feel, I.apparent_air_temperature);
+        if (I.ultraviolet_index_clear_sky != null) d.uv = Math.max(d.uv, I.ultraviolet_index_clear_sky);
         const n1 = x.data.next_1_hours, n6 = x.data.next_6_hours;
         if (n6) {
             const { air_temperature_min: a, air_temperature_max: b } = n6.details;
@@ -69,9 +99,15 @@ function daily(json) {
     const out = {};
     for (const [k, d] of Object.entries(days)) {
         if (!d.codes.length && d.hours < FULL_DAY_HOURS) continue;
-        out[k] = [pickIcon(d.codes, d.mm), Math.round(d.mn), Math.round(d.mx), round1(d.mm), d.hours];
+        const hum = d.hum.length ? Math.round(d.hum.reduce((a, b) => a + b, 0) / d.hum.length) : null;
+        out[k] = [pickIcon(d.codes, d.mm), Math.round(d.mn), Math.round(d.mx), round1(d.mm), pickKind(d.codes, d.mm),
+            hum, d.wind < 0 ? null : kmh(d.wind), Math.round(d.dir), d.feel === -Infinity ? null : Math.round(d.feel), round1(d.uv), d.hours];
     }
-    return out;
+    // "hiện tại" = mốc giờ đầu của bản tin (MET bắt đầu từ giờ đang diễn ra): giờ, nhiệt độ, cảm giác, ẩm, gió, hướng, loại hình
+    const x0 = json.properties.timeseries[0], I0 = x0.data.instant.details, s0 = (x0.data.next_1_hours || x0.data.next_6_hours || {}).summary;
+    const now = { t: x0.time, temp: Math.round(I0.air_temperature), feel: I0.apparent_air_temperature == null ? null : Math.round(I0.apparent_air_temperature),
+        hum: Math.round(I0.relative_humidity), wind: kmh(I0.wind_speed || 0), dir: Math.round(I0.wind_from_direction || 0), kind: s0 ? kindOf(s0.symbol_code) : null };
+    return { days: out, now };
 }
 
 async function fetchArea(a) {
@@ -83,7 +119,7 @@ async function fetchArea(a) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const json = await r.json();
     state.lastmod[a.id] = r.headers.get('last-modified') || state.lastmod[a.id];
-    return { status: 200, days: daily(json) };
+    return { status: 200, ...daily(json) };
 }
 
 // dữ liệu lượt trước của 1 khu vực → { date: [icon, mn, mx, mm] }
@@ -102,22 +138,26 @@ const t0 = Date.now();
 const targets = [...points.provinces.flatMap(p => p.areas), ...(points.dests || []).filter(d => d.lat != null)];
 for (const a of targets) {
     const old = prevDays(a.id);
-    let days, ok = prev?.areas?.[a.id]?.t;
+    let days, ok = prev?.areas?.[a.id]?.t, nowBlk = prev?.areas?.[a.id]?.n || null;
     try {
         const r = await fetchArea(a);
         stat[r.status]++;
         if (r.status === 304) days = old;
         else {
             ok = new Date(now).toISOString();
+            nowBlk = r.now;
             days = {};
             for (const [k, v] of Object.entries(r.days)) {
                 // ngày đã đi qua (dù ngày cuối chưa đủ 18 giờ dữ liệu) → bỏ ngày cuối thiếu
-                if (k !== today && v[4] < FULL_DAY_HOURS) continue;
-                days[k] = v.slice(0, 4);
+                if (k !== today && v[10] < FULL_DAY_HOURS) continue;
+                days[k] = v.slice(0, 10);
             }
             // HÔM NAY: MET chỉ có từ giờ hiện tại trở đi → giữ cao nhất/thấp nhất/lượng mưa đã thấy trong ngày
             const o = old[today], n = days[today];
-            if (o && n) days[today] = [n[0], Math.min(o[1], n[1]), Math.max(o[2], n[2]), Math.max(o[3], n[3])];
+            // (ẩm / loại hình lấy bản mới; gió, cảm giác, UV giữ mức cao nhất đã thấy)
+            const mx = (x, y) => x == null ? y : y == null ? x : Math.max(x, y);
+            if (o && n) days[today] = [n[0], Math.min(o[1], n[1]), Math.max(o[2], n[2]), Math.max(o[3], n[3]), n[4] || o[4], n[5] ?? o[5],
+                mx(o[6], n[6]), (o[6] ?? -1) > (n[6] ?? -1) ? o[7] : n[7], mx(o[8], n[8]), mx(o[9], n[9])];
             else if (o && !n) days[today] = o;
         }
     } catch (e) {
@@ -134,7 +174,7 @@ for (const a of targets) {
             if (!days[k]) break;
             d.push(days[k]);
         }
-        areas[a.id] = { t: ok, s: keys[0], d };
+        areas[a.id] = { t: ok, s: keys[0], d, ...(nowBlk ? { n: nowBlk } : {}) };
     }
     await sleep(GAP_MS);
 }
