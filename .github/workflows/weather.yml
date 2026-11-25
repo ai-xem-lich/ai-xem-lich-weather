@@ -50,7 +50,23 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out
-      - uses: actions/deploy-pages@v4
+      # deploy-pages hay báo "No artifacts named github-pages were found" dù bước trên vừa tải lên thành công
+      # (API artifact của GitHub chưa kịp thấy bản mới — đo 20–25/11: 40/40 lượt hỏng đều ở bước này, 4–13 lượt/ngày,
+      # mỗi lượt hỏng gửi 1 email). Thử lại tối đa 3 lần, cách 20 s / 60 s; nhánh data + jsDelivr đã cập nhật ở trên.
+      - id: deploy1
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - if: steps.deploy1.outcome == 'failure'
+        run: sleep 20
+      - id: deploy2
+        if: steps.deploy1.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - if: steps.deploy2.outcome == 'failure'
+        run: sleep 60
+      - id: deploy3
+        if: steps.deploy2.outcome == 'failure'
+        uses: actions/deploy-pages@v4
 
       - name: Làm mới jsDelivr (nguồn dự phòng)
         continue-on-error: true
