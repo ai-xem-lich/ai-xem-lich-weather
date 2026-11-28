@@ -39,7 +39,7 @@ const T = [
   ['An Giang', [['An Giang', 10.3864, 105.4352], ['Kiên Giang', 10.0125, 105.0809]]],
 ];
 // Toạ độ điểm du lịch đối chiếu 2026-11-16 (Wikidata + OSM, độ cao SRTM): Mẫu Sơn = khu nghỉ ~1.150 m (không phải sườn 860 m),
-// Pù Luông = thung lũng Bản Đôn ~340 m (homestay), Mũi Né = giữa dải resort (không phải làng chài). Bà Rịa – Vũng Tàu đặt ở Bãi Trước.
+// Pù Luông = thung lũng Bản Đôn ~340 m (homestay), Mũi Né = giữa dải resort (không phải làng chài). Bà Rịa – Vũng Tàu đặt ở Bãi Trước. Phước Hải (thêm 2026-11-28) = chợ Phước Hải sát biển (OSM), cách điểm Vũng Tàu ~25 km.
 // Điểm du lịch (user duyệt 2026-11-16, thứ tự = thứ tự hiện trong app): [tên, tỉnh mới, lat, lon] = điểm riêng (gọi MET riêng);
 // [tên, tỉnh mới, '=khu vực'] = dùng chung dữ liệu khu vực đã có. Đo 16/11: Bà Nà lệch Đà Nẵng 8°, Bạch Mã lệch Huế 6–8°, Tam Đảo 6°, Mũi Né 5°…
 const DESTS = [
@@ -56,6 +56,7 @@ const DESTS = [
   ['Huế', 'Huế', '=Huế'],
   ['Mũi Né', 'Lâm Đồng', 10.9480, 108.2300],
   ['Vũng Tàu', 'TP. Hồ Chí Minh', '=Bà Rịa – Vũng Tàu'],
+  ['Phước Hải', 'TP. Hồ Chí Minh', 10.4186, 107.2864],
   ['Bà Nà', 'Đà Nẵng', 15.9959, 107.9891],
   ['Quy Nhơn', 'Gia Lai', '=Bình Định'],
   ['Côn Đảo', 'TP. Hồ Chí Minh', 8.6850, 106.6080],

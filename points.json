@@ -672,6 +672,14 @@
    "point": "ba-ria-vung-tau"
   },
   {
+   "id": "phuoc-hai",
+   "name": "Phước Hải",
+   "prov": "tp-ho-chi-minh",
+   "point": "phuoc-hai",
+   "lat": 10.4186,
+   "lon": 107.2864
+  },
+  {
    "id": "ba-na",
    "name": "Bà Nà",
    "prov": "da-nang",
